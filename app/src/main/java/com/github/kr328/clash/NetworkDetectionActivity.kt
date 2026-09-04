@@ -18,11 +18,18 @@ import java.net.URL
 /** Hosts public-IP lookup and parallel endpoint latency probes. */
 class NetworkDetectionActivity : BaseActivity<NetworkDetectionDesign>() {
     /** Stable targets synchronized from the desktop network page. */
-    private val latencyTargets = listOf(
-        "Google" to "https://www.google.com/generate_204",
-        "Cloudflare" to "https://www.cloudflare.com/cdn-cgi/trace",
-        "GitHub" to "https://github.com/",
-    )
+    private val latencyTargets: List<Pair<String, String>>
+        get() = buildList {
+            add("Google" to "https://www.google.com/generate_204")
+            add("Cloudflare" to "https://www.cloudflare.com/cdn-cgi/trace")
+            add("GitHub" to "https://github.com/")
+            uiStore.networkDetectionTargets.lineSequence().map(String::trim).filter(String::isNotEmpty).forEach { line ->
+                val parts = line.split('|', limit = 2)
+                if (parts.size == 2 && parts[1].startsWith("https://")) {
+                    add(parts[0].ifBlank { parts[1] } to parts[1])
+                }
+            }
+        }
 
     /** Creates the page, performs its initial detection, and handles explicit refresh requests. */
     override suspend fun main() {
@@ -62,28 +69,29 @@ class NetworkDetectionActivity : BaseActivity<NetworkDetectionDesign>() {
         }
     }
 
-    /** Queries ipwho.is and maps only fields rendered by the card; failures become an empty state. */
+    /** Queries multiple desktop-aligned providers in order and returns the first usable public IP. */
     private fun queryPublicNetworkInfo(): PublicNetworkInfo? {
-        return try {
-            openHttpConnection("https://ipwho.is/").useConnection { connection ->
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
-                if (!json.optBoolean("success", true)) {
-                    return null
+        val providers = listOf("https://ipwho.is/", "https://api.ip.sb/geoip", "https://api.ipify.org?format=json")
+        providers.forEach { providerUrl ->
+            try {
+                return openHttpConnection(providerUrl).useConnection { connection ->
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(response)
+                    if (!json.optBoolean("success", true)) {
+                        throw IllegalStateException("Provider reported an unsuccessful response")
+                    }
+                    val location = listOf(json.optString("country"), json.optString("region"), json.optString("city"))
+                        .filter(String::isNotBlank)
+                        .joinToString(" · ")
+                    val organization = json.optJSONObject("connection")?.optString("org").orEmpty()
+                        .ifEmpty { json.optString("organization") }
+                    PublicNetworkInfo(json.optString("ip"), location, organization)
                 }
-                val location = listOf(json.optString("country"), json.optString("region"), json.optString("city"))
-                    .filter(String::isNotBlank)
-                    .joinToString(" · ")
-                val organization = json.optJSONObject("connection")?.optString("org").orEmpty()
-                PublicNetworkInfo(json.optString("ip"), location, organization)
+            } catch (exception: Exception) {
+                Log.e("Network detection public IP provider failed; url=$providerUrl", exception)
             }
-        } catch (exception: Exception) {
-            Log.e(
-                "Network detection failed during public IP lookup; url=https://ipwho.is/",
-                exception,
-            )
-            null
         }
+        return null
     }
 
     /** Measures time through receipt of an HTTP status; failures are represented by null. */

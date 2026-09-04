@@ -8,6 +8,8 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
 import com.github.kr328.clash.common.compat.isAllowForceDarkCompat
 import com.github.kr328.clash.common.compat.isSystemBarsTranslucentCompat
 import com.github.kr328.clash.design.R
@@ -20,10 +22,18 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class AppBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
+    /** Lifecycle registry required by newer AndroidX lifecycle contracts. */
+    private val dialogLifecycleRegistry = LifecycleRegistry(this)
+
+    /** Lifecycle exposed to observers attached to content hosted by this dialog. */
+    override val lifecycle: Lifecycle
+        get() = dialogLifecycleRegistry
+
     private var insets: Insets = Insets.EMPTY
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dialogLifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
         setCancelable(true)
 
@@ -66,6 +76,18 @@ class AppBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
             behavior.halfExpandedRatio = 0.99f
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
+    }
+
+    /** Moves dialog observers into the active state after the window becomes visible. */
+    override fun onStart() {
+        super.onStart()
+        dialogLifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+    }
+
+    /** Stops dialog observers before the window is hidden. */
+    override fun onStop() {
+        dialogLifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        super.onStop()
     }
 }
 

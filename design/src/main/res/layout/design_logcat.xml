@@ -57,41 +57,41 @@
                         android:visibility="@{streaming ? View.GONE : View.VISIBLE}">
 
                         <ImageView
-                            android:layout_width="@dimen/item_tailing_component_size"
-                            android:layout_height="@dimen/item_tailing_component_size"
-                            android:layout_marginStart="@dimen/item_tailing_margin"
+                            android:layout_width="@dimen/minimum_touch_target"
+                            android:layout_height="@dimen/minimum_touch_target"
+                            android:layout_marginStart="@dimen/space_4"
                             android:background="?selectableItemBackgroundBorderless"
                             android:clickable="true"
                             android:contentDescription="@string/delete"
                             android:focusable="true"
                             android:onClick="@{() -> self.requests.offer(Request.Delete)}"
-                            android:padding="@dimen/toolbar_image_action_padding"
+                            android:padding="@dimen/space_12"
                             android:src="@drawable/ic_baseline_delete" />
 
                         <ImageView
-                            android:layout_width="@dimen/item_tailing_component_size"
-                            android:layout_height="@dimen/item_tailing_component_size"
-                            android:layout_marginStart="@dimen/item_tailing_margin"
+                            android:layout_width="@dimen/minimum_touch_target"
+                            android:layout_height="@dimen/minimum_touch_target"
+                            android:layout_marginStart="@dimen/space_4"
                             android:background="?selectableItemBackgroundBorderless"
                             android:clickable="true"
                             android:contentDescription="@string/export"
                             android:focusable="true"
                             android:onClick="@{() -> self.requests.offer(Request.Export)}"
-                            android:padding="@dimen/toolbar_image_action_padding"
+                            android:padding="@dimen/space_12"
                             android:src="@drawable/ic_baseline_publish" />
                     </LinearLayout>
 
                     <ImageView
-                        android:layout_width="@dimen/item_tailing_component_size"
-                        android:layout_height="@dimen/item_tailing_component_size"
+                        android:layout_width="@dimen/minimum_touch_target"
+                        android:layout_height="@dimen/minimum_touch_target"
                         android:layout_gravity="end"
-                        android:layout_marginStart="@dimen/item_tailing_margin"
+                        android:layout_marginStart="@dimen/space_4"
                         android:background="?selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:contentDescription="@string/close"
                         android:focusable="true"
                         android:onClick="@{() -> self.requests.offer(Request.Close)}"
-                        android:padding="@dimen/toolbar_image_action_padding"
+                        android:padding="@dimen/space_12"
                         android:src="@drawable/ic_baseline_stop"
                         android:visibility="@{streaming ? View.VISIBLE : View.GONE}" />
                 </FrameLayout>

@@ -42,6 +42,8 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
         install(AppListCacheModule(self))
         install(TimeZoneModule(self))
         install(SuspendModule(self))
+        // VPN mode owns a separate runtime from ClashService and must sample the same history.
+        install(TrafficHistoryModule(self))
 
         try {
             tun.open()

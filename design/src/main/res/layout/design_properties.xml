@@ -130,8 +130,8 @@
 
                 <FrameLayout
                     android:id="@+id/action_layout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/minimum_touch_target"
+                    android:layout_height="@dimen/minimum_touch_target"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:layout_marginStart="@dimen/item_tailing_margin">
@@ -143,15 +143,15 @@
                         android:visibility="@{processing ? View.VISIBLE : View.GONE}" />
 
                     <ImageView
-                        android:layout_width="@dimen/item_tailing_component_size"
-                        android:layout_height="@dimen/item_tailing_component_size"
+                        android:layout_width="@dimen/minimum_touch_target"
+                        android:layout_height="@dimen/minimum_touch_target"
                         android:layout_gravity="end|center_vertical"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:contentDescription="@string/save"
                         android:focusable="true"
                         android:onClick="@{() -> self.requestCommit()}"
-                        android:padding="@dimen/toolbar_image_action_padding"
+                        android:padding="@dimen/space_12"
                         android:src="@drawable/ic_baseline_save"
                         android:visibility="@{processing ? View.GONE : View.VISIBLE}" />
                 </FrameLayout>

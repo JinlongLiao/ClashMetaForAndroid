@@ -16,6 +16,10 @@ object Bridge {
     external fun nativeQueryTunnelState(): String
     external fun nativeQueryTrafficNow(): Long
     external fun nativeQueryTrafficTotal(): Long
+    external fun nativeQueryConnections(): String
+    external fun nativeCloseConnection(id: String)
+    external fun nativeCloseAllConnections()
+    external fun nativeQueryRules(): String
     external fun nativeNotifyDnsChanged(dnsList: String)
     external fun nativeNotifyTimeZoneChanged(name: String, offset: Int)
     external fun nativeNotifyInstalledAppChanged(uidList: String)

@@ -2,6 +2,7 @@ package com.github.kr328.clash.design.view
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -12,6 +13,7 @@ import com.github.kr328.clash.design.databinding.ComponentLargeActionLabelBindin
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveClickableAttrs
 import com.github.kr328.clash.design.util.selectableItemBackground
+import com.github.kr328.clash.design.util.resolveThemedColor
 
 class LargeActionLabel @JvmOverloads constructor(
     context: Context,
@@ -71,5 +73,14 @@ class LargeActionLabel @JvmOverloads constructor(
                 recycle()
             }
         }
+
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = resources.displayMetrics.density * 16f
+            setColor(context.resolveThemedColor(com.google.android.material.R.attr.colorSurface))
+        }
+        foreground = context.selectableItemBackground
+        elevation = resources.displayMetrics.density
+        setPadding(0, (resources.displayMetrics.density * 3).toInt(), 0, (resources.displayMetrics.density * 3).toInt())
     }
 }

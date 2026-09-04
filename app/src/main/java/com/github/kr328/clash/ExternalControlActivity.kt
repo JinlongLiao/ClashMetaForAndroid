@@ -30,6 +30,10 @@ class ExternalControlActivity : Activity(), CoroutineScope by MainScope() {
         when(intent.action) {
             Intent.ACTION_VIEW -> {
                 val uri = intent.data ?: return finish()
+                if (uri.scheme == "clashmeta" && uri.host == "open-app") {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    return finish()
+                }
                 val url = uri.getQueryParameter("url") ?: return finish()
 
                 launch {

@@ -37,6 +37,26 @@ func queryTotal(upload, download *C.uint64_t) {
 	*download = C.uint64_t(down)
 }
 
+//export queryConnections
+func queryConnections() *C.char {
+	return marshalJson(tunnel.QueryConnections())
+}
+
+//export closeConnection
+func closeConnection(id C.c_string) {
+	tunnel.CloseConnection(C.GoString(id))
+}
+
+//export closeAllConnections
+func closeAllConnections() {
+	tunnel.CloseAllConnections()
+}
+
+//export queryRules
+func queryRules() *C.char {
+	return marshalJson(tunnel.QueryRules())
+}
+
 //export queryGroupNames
 func queryGroupNames(excludeNotSelectable C.int) *C.char {
 	return marshalJson(tunnel.QueryProxyGroupNames(excludeNotSelectable != 0))

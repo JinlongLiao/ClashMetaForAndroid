@@ -50,6 +50,26 @@ object Clash {
         return Bridge.nativeQueryTrafficTotal()
     }
 
+    /** Returns the current connection snapshot as the native controller-compatible JSON payload. */
+    fun queryConnections(): String {
+        return Bridge.nativeQueryConnections()
+    }
+
+    /** Closes one active connection identified by its tracker ID. */
+    fun closeConnection(id: String) {
+        Bridge.nativeCloseConnection(id)
+    }
+
+    /** Closes every active connection managed by the embedded core. */
+    fun closeAllConnections() {
+        Bridge.nativeCloseAllConnections()
+    }
+
+    /** Returns the ordered active rule chain as JSON without exposing a controller socket. */
+    fun queryRules(): String {
+        return Bridge.nativeQueryRules()
+    }
+
     fun notifyDnsChanged(dns: List<String>) {
         Bridge.nativeNotifyDnsChanged(dns.toSet().joinToString(separator = ","))
     }

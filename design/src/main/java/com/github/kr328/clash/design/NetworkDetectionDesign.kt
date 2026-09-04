@@ -2,6 +2,7 @@ package com.github.kr328.clash.design
 
 import android.content.Context
 import android.view.View
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.github.kr328.clash.design.databinding.DesignNetworkDetectionBinding
 import com.github.kr328.clash.design.model.NetworkLatencyResult
@@ -65,6 +66,20 @@ class NetworkDetectionDesign(context: Context) : Design<NetworkDetectionDesign.R
             val value = result?.latencyMillis?.let { "$it ms" } ?: "—"
             view.text = context.getString(R.string.network_latency_result, targetNames[index], value)
             view.setTextColor(resolveLatencyColor(result?.latencyMillis))
+        }
+        binding.customLatencyContainer.removeAllViews()
+        results.drop(views.size).forEach { result ->
+            binding.customLatencyContainer.addView(TextView(context).apply {
+                text = context.getString(
+                    R.string.network_latency_result,
+                    result.name,
+                    result.latencyMillis?.let { "$it ms" } ?: "—",
+                )
+                setTextColor(resolveLatencyColor(result.latencyMillis))
+                minHeight = resources.getDimensionPixelSize(R.dimen.minimum_touch_target)
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(0, resources.getDimensionPixelSize(R.dimen.space_12), 0, 0)
+            })
         }
         val successful = results.mapNotNull(NetworkLatencyResult::latencyMillis)
         binding.averageLatencyView.text = if (successful.isEmpty()) {

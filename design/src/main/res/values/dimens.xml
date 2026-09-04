@@ -2,6 +2,13 @@
 <resources>
     <!-- Common -->
     <dimen name="divider_size">1dp</dimen>
+    <dimen name="space_4">4dp</dimen>
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_24">24dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="minimum_touch_target">48dp</dimen>
 
     <!-- Dialog -->
     <dimen name="dialog_padding">20dp</dimen>
@@ -35,19 +42,19 @@
     <dimen name="large_item_text_margin">5dp</dimen>
 
     <!--  Common Item  -->
-    <dimen name="item_min_height">75dp</dimen>
+    <dimen name="item_min_height">64dp</dimen>
     <dimen name="item_header_component_size">30dp</dimen>
     <dimen name="item_header_margin">17.5dp</dimen>
     <dimen name="item_tailing_component_size">30dp</dimen>
     <dimen name="item_tailing_margin">17.5dp</dimen>
-    <dimen name="item_padding_vertical">16dp</dimen>
+    <dimen name="item_padding_vertical">12dp</dimen>
     <dimen name="item_text_margin">5dp</dimen>
     <dimen name="item_midden_margin">10dp</dimen>
 
     <!-- Large Card -->
-    <dimen name="large_action_card_radius">8dp</dimen>
-    <dimen name="large_action_card_elevation">5dp</dimen>
-    <dimen name="large_action_card_min_height">85dp</dimen>
+    <dimen name="large_action_card_radius">22dp</dimen>
+    <dimen name="large_action_card_elevation">2dp</dimen>
+    <dimen name="large_action_card_min_height">104dp</dimen>
 
     <!-- Tips -->
     <dimen name="tips_icon_size">25dp</dimen>
@@ -58,10 +65,14 @@
 
     <!-- Main Design -->
     <dimen name="main_card_margin_vertical">5dp</dimen>
-    <dimen name="main_label_margin_vertical">2dp</dimen>
-    <dimen name="main_padding_horizontal">30dp</dimen>
-    <dimen name="main_logo_size">50dp</dimen>
-    <dimen name="main_top_banner_height">90dp</dimen>
+    <dimen name="main_label_margin_vertical">4dp</dimen>
+    <dimen name="main_padding_horizontal">16dp</dimen>
+    <dimen name="main_logo_size">36dp</dimen>
+    <dimen name="main_top_banner_height">56dp</dimen>
+    <dimen name="main_status_height">104dp</dimen>
+    <dimen name="main_core_card_height">88dp</dimen>
+    <dimen name="main_tool_card_height">68dp</dimen>
+    <dimen name="main_grid_gap">8dp</dimen>
 
     <!--  Proxy Design -->
     <dimen name="proxy_layout_padding">3dp</dimen>

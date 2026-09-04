@@ -3,10 +3,94 @@
     <style name="NetworkDetectionLatencyRow" parent="TextAppearance.MaterialComponents.Body1">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">14dp</item>
+        <item name="android:layout_marginTop">@dimen/space_12</item>
+        <item name="android:minHeight">@dimen/minimum_touch_target</item>
+        <item name="android:gravity">center_vertical</item>
     </style>
 
     <style name="ThemeOverlay" />
+
+    <style name="ThemeOverlay.Palette.Base" parent="ThemeOverlay">
+        <item name="colorPrimaryDark">?attr/colorPrimary</item>
+        <item name="colorSecondary">?attr/colorPrimary</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="colorLogo">?attr/colorPrimary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="ThemeOverlay.Palette.Blue.Light" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_blue_light</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteBlueLight</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteBlueLight</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Blue.Dark" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_blue_dark</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteBlueDark</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteBlueDark</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Indigo.Light" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_indigo_light</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteIndigoLight</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteIndigoLight</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Indigo.Dark" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_indigo_dark</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteIndigoDark</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteIndigoDark</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Purple.Light" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_purple_light</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPalettePurpleLight</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPalettePurpleLight</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Purple.Dark" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_purple_dark</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPalettePurpleDark</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPalettePurpleDark</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Teal.Light" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_teal_light</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteTealLight</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteTealLight</item>
+    </style>
+    <style name="ThemeOverlay.Palette.Teal.Dark" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_teal_dark</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteTealDark</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteTealDark</item>
+    </style>
+    <style name="ThemeOverlay.Palette.OrangeRed.Light" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_orange_red_light</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteOrangeRedLight</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteOrangeRedLight</item>
+    </style>
+    <style name="ThemeOverlay.Palette.OrangeRed.Dark" parent="ThemeOverlay.Palette.Base">
+        <item name="colorPrimary">@color/palette_orange_red_dark</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogPaletteOrangeRedDark</item>
+        <item name="fullScreenDialogTheme">@style/AppFullScreenDialogPaletteOrangeRedDark</item>
+    </style>
+
+    <style name="AppBottomSheetDialogPaletteBlueLight" parent="AppBottomSheetDialogLight"><item name="colorPrimary">@color/palette_blue_light</item></style>
+    <style name="AppBottomSheetDialogPaletteBlueDark" parent="AppBottomSheetDialogDark"><item name="colorPrimary">@color/palette_blue_dark</item></style>
+    <style name="AppBottomSheetDialogPaletteIndigoLight" parent="AppBottomSheetDialogLight"><item name="colorPrimary">@color/palette_indigo_light</item></style>
+    <style name="AppBottomSheetDialogPaletteIndigoDark" parent="AppBottomSheetDialogDark"><item name="colorPrimary">@color/palette_indigo_dark</item></style>
+    <style name="AppBottomSheetDialogPalettePurpleLight" parent="AppBottomSheetDialogLight"><item name="colorPrimary">@color/palette_purple_light</item></style>
+    <style name="AppBottomSheetDialogPalettePurpleDark" parent="AppBottomSheetDialogDark"><item name="colorPrimary">@color/palette_purple_dark</item></style>
+    <style name="AppBottomSheetDialogPaletteTealLight" parent="AppBottomSheetDialogLight"><item name="colorPrimary">@color/palette_teal_light</item></style>
+    <style name="AppBottomSheetDialogPaletteTealDark" parent="AppBottomSheetDialogDark"><item name="colorPrimary">@color/palette_teal_dark</item></style>
+    <style name="AppBottomSheetDialogPaletteOrangeRedLight" parent="AppBottomSheetDialogLight"><item name="colorPrimary">@color/palette_orange_red_light</item></style>
+    <style name="AppBottomSheetDialogPaletteOrangeRedDark" parent="AppBottomSheetDialogDark"><item name="colorPrimary">@color/palette_orange_red_dark</item></style>
+
+    <style name="AppFullScreenDialogPaletteBlueLight" parent="AppFullScreenDialogLight"><item name="colorPrimary">@color/palette_blue_light</item></style>
+    <style name="AppFullScreenDialogPaletteBlueDark" parent="AppFullScreenDialogDark"><item name="colorPrimary">@color/palette_blue_dark</item></style>
+    <style name="AppFullScreenDialogPaletteIndigoLight" parent="AppFullScreenDialogLight"><item name="colorPrimary">@color/palette_indigo_light</item></style>
+    <style name="AppFullScreenDialogPaletteIndigoDark" parent="AppFullScreenDialogDark"><item name="colorPrimary">@color/palette_indigo_dark</item></style>
+    <style name="AppFullScreenDialogPalettePurpleLight" parent="AppFullScreenDialogLight"><item name="colorPrimary">@color/palette_purple_light</item></style>
+    <style name="AppFullScreenDialogPalettePurpleDark" parent="AppFullScreenDialogDark"><item name="colorPrimary">@color/palette_purple_dark</item></style>
+    <style name="AppFullScreenDialogPaletteTealLight" parent="AppFullScreenDialogLight"><item name="colorPrimary">@color/palette_teal_light</item></style>
+    <style name="AppFullScreenDialogPaletteTealDark" parent="AppFullScreenDialogDark"><item name="colorPrimary">@color/palette_teal_dark</item></style>
+    <style name="AppFullScreenDialogPaletteOrangeRedLight" parent="AppFullScreenDialogLight"><item name="colorPrimary">@color/palette_orange_red_light</item></style>
+    <style name="AppFullScreenDialogPaletteOrangeRedDark" parent="AppFullScreenDialogDark"><item name="colorPrimary">@color/palette_orange_red_dark</item></style>
 
     <style name="ThemeOverlay.ControlColorError">
         <item name="colorControlNormal">@color/color_error</item>

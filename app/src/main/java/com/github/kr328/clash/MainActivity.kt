@@ -31,7 +31,10 @@ import com.github.kr328.clash.design.R as DesignR
 
 class MainActivity : BaseActivity<MainDesign>() {
     override suspend fun main() {
-        val design = MainDesign(this)
+        val design = MainDesign(
+            this,
+            uiStore.remoteThemeKey.isNotEmpty() || uiStore.customBackgroundImagePath.isNotEmpty(),
+        )
 
         setContentDesign(design)
 
@@ -64,6 +67,22 @@ class MainActivity : BaseActivity<MainDesign>() {
                             startActivity(ProfilesActivity::class.intent)
                         MainDesign.Request.OpenProviders ->
                             startActivity(ProvidersActivity::class.intent)
+                        MainDesign.Request.OpenConnections ->
+                            startActivity(RuntimeInsightsActivity::class.intent)
+                        MainDesign.Request.OpenRules ->
+                            startActivity(
+                                RuntimeInsightsActivity::class.intent.putExtra(
+                                    RuntimeInsightsActivity.EXTRA_INSIGHT_TYPE,
+                                    RuntimeInsightsActivity.TYPE_RULES,
+                                )
+                            )
+                        MainDesign.Request.OpenTraffic ->
+                            startActivity(
+                                RuntimeInsightsActivity::class.intent.putExtra(
+                                    RuntimeInsightsActivity.EXTRA_INSIGHT_TYPE,
+                                    RuntimeInsightsActivity.TYPE_TRAFFIC,
+                                )
+                            )
                         MainDesign.Request.OpenLogs -> {
                             if (LogcatService.running) {
                                 startActivity(LogcatActivity::class.intent)
@@ -90,6 +109,9 @@ class MainActivity : BaseActivity<MainDesign>() {
 
     private suspend fun MainDesign.fetch() {
         setClashRunning(clashRunning)
+        // Status data binding writes its legacy running/stopped color after initial inflation.
+        // Reapply semantic theme tokens so the status card keeps the selected theme appearance.
+        reapplyCurrentThemeTokens()
 
         val state = withClash {
             queryTunnelState()
@@ -108,7 +130,7 @@ class MainActivity : BaseActivity<MainDesign>() {
 
     private suspend fun MainDesign.fetchTraffic() {
         withClash {
-            setForwarded(queryTrafficTotal())
+            setTraffic(queryTrafficNow(), queryTrafficTotal())
         }
     }
 

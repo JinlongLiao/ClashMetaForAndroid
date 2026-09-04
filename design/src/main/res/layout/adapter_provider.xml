@@ -22,22 +22,26 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="@dimen/item_min_height"
+        android:minHeight="88dp"
         android:paddingStart="@dimen/item_header_margin"
         android:paddingEnd="0dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/elapsed_view"
+            android:layout_toStartOf="@id/end_view"
+            android:paddingBottom="28dp"
+            android:paddingEnd="56dp"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@{provider.name}"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <TextView
@@ -45,6 +49,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/item_text_margin"
                 android:text="@{I18nKt.type(provider, context)}"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
         </LinearLayout>
 
@@ -52,7 +58,8 @@
             android:id="@+id/elapsed_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="8dp"
             android:layout_marginEnd="@dimen/item_midden_margin"
             android:layout_toStartOf="@id/end_view"
             android:text="@{IntervalKt.elapsedIntervalString(currentTime.value - state.updatedAt, context)}" />
@@ -68,8 +75,8 @@
 
         <FrameLayout
             android:id="@+id/end_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackground"
@@ -83,7 +90,7 @@
                 android:layout_width="@dimen/item_tailing_component_size"
                 android:layout_height="@dimen/item_tailing_component_size"
                 android:layout_gravity="center"
-                android:layout_margin="@dimen/item_tailing_margin"
+                android:layout_margin="9dp"
                 android:contentDescription="@string/more"
                 android:src="@drawable/ic_baseline_swap_vert"
                 android:visibility="@{state.updating ? View.GONE : View.VISIBLE}" />
@@ -92,7 +99,7 @@
                 android:layout_width="@dimen/item_tailing_component_size"
                 android:layout_height="@dimen/item_tailing_component_size"
                 android:layout_gravity="center"
-                android:layout_margin="@dimen/item_tailing_margin"
+                android:layout_margin="9dp"
                 android:visibility="@{state.updating ? View.VISIBLE : View.GONE}" />
         </FrameLayout>
     </RelativeLayout>

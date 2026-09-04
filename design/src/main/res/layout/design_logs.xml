@@ -40,8 +40,8 @@
 
                     <ImageView
                         android:id="@+id/delete_view"
-                        android:layout_width="@dimen/item_tailing_component_size"
-                        android:layout_height="@dimen/item_tailing_component_size"
+                        android:layout_width="@dimen/minimum_touch_target"
+                        android:layout_height="@dimen/minimum_touch_target"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
                         android:layout_gravity="end|center_vertical"
@@ -51,7 +51,7 @@
                         android:contentDescription="@string/delete_all_logs"
                         android:focusable="true"
                         android:onClick="@{() -> self.requests.offer(Request.DeleteAll.INSTANCE)}"
-                        android:padding="@dimen/toolbar_image_action_padding"
+                        android:padding="@dimen/space_12"
                         android:src="@drawable/ic_baseline_clear_all" />
                 </RelativeLayout>
             </com.github.kr328.clash.design.view.ActivityBarLayout>

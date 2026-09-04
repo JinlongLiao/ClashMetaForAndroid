@@ -7,8 +7,14 @@ fun Traffic.trafficUpload(): String {
 }
 
 fun Traffic.trafficDownload(): String {
-    return trafficString(scaleTraffic(this and 0xFFFFFFFF))
+    return trafficString(trafficDownloadBytes())
 }
+
+/** Returns the decoded upload byte count stored in this packed traffic value. */
+fun Traffic.trafficUploadBytes(): Long = scaleTraffic(this ushr 32)
+
+/** Returns the decoded download byte count stored in this packed traffic value. */
+fun Traffic.trafficDownloadBytes(): Long = scaleTraffic(this and 0xFFFFFFFF)
 
 fun Traffic.trafficTotal(): String {
     val upload = scaleTraffic(this ushr 32)

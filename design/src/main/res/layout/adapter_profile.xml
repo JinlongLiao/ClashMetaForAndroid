@@ -19,12 +19,12 @@
     </data>
 
     <RelativeLayout
-        android:elevation="5dp"
+        android:elevation="0dp"
         android:id="@+id/root_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="5dp"
-        android:layout_marginHorizontal="@dimen/item_header_margin"
+        android:layout_marginVertical="@dimen/space_4"
+        android:layout_marginHorizontal="@dimen/space_16"
         android:background="@drawable/bg_b"
         android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
@@ -48,9 +48,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/elapsed_view"
+            android:layout_toStartOf="@id/menu_view"
             android:layout_toEndOf="@id/icon_view"
             android:orientation="vertical"
+            android:paddingEnd="56dp"
             android:paddingVertical="@dimen/item_padding_vertical">
 
             <TextView
@@ -110,6 +111,9 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginEnd="@dimen/item_midden_margin"
+            android:maxWidth="72dp"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:layout_toStartOf="@id/menu_view"
             android:text="@{IntervalKt.elapsedIntervalString(currentTime.value - profile.updatedAt, context)}"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Tooltip" />
@@ -122,8 +126,8 @@
 
         <FrameLayout
             android:id="@+id/menu_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/minimum_touch_target"
+            android:layout_height="@dimen/minimum_touch_target"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackground"
@@ -135,7 +139,7 @@
             <View
                 android:layout_width="@dimen/item_tailing_component_size"
                 android:layout_height="@dimen/item_tailing_component_size"
-                android:layout_margin="@dimen/item_tailing_margin"
+                android:layout_margin="9dp"
                 android:background="@drawable/ic_baseline_more_vert" />
         </FrameLayout>
     </RelativeLayout>

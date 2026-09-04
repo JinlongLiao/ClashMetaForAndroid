@@ -19,6 +19,9 @@ fun CoroutineScope.preferenceScreen(
 ): PreferenceScreen {
     val root = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
+        // BaseActivity uses this semantic marker to project the active online theme onto every
+        // settings screen without coupling the reusable design module to persisted theme data.
+        tag = "theme_surface_container"
     }
 
     val impl = object : PreferenceScreen, CoroutineScope by this {

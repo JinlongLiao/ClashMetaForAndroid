@@ -6,6 +6,7 @@ import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.model.*
 import com.github.kr328.clash.service.data.Selection
 import com.github.kr328.clash.service.data.SelectionDao
+import com.github.kr328.clash.service.data.TrafficHistoryStore
 import com.github.kr328.clash.service.remote.IClashManager
 import com.github.kr328.clash.service.remote.ILogObserver
 import com.github.kr328.clash.service.store.ServiceStore
@@ -22,8 +23,45 @@ class ClashManager(private val context: Context) : IClashManager,
         return Clash.queryTunnelState()
     }
 
+    /** Returns the encoded upload and download rates sampled by the running core. */
+    override fun queryTrafficNow(): Long {
+        return Clash.queryTrafficNow()
+    }
+
     override fun queryTrafficTotal(): Long {
         return Clash.queryTrafficTotal()
+    }
+
+    /** Returns the active connection snapshot serialized by the embedded core. */
+    override fun queryConnections(): String {
+        return Clash.queryConnections()
+    }
+
+    /** Closes one active connection by its tracker identifier. */
+    override fun closeConnection(id: String) {
+        Clash.closeConnection(id)
+    }
+
+    /** Closes all active core connections. */
+    override fun closeAllConnections() {
+        Clash.closeAllConnections()
+    }
+
+    /** Returns the ordered runtime rules serialized by the embedded core. */
+    override fun queryRules(): String {
+        return Clash.queryRules()
+    }
+
+    /** Returns persisted traffic buckets newer than the supplied epoch timestamp. */
+    override fun queryTrafficHistory(since: Long): String {
+        return TrafficHistoryStore(context).use { store ->
+            store.queryTrafficHistory(since)
+        }
+    }
+
+    /** Clears every persisted traffic-history bucket and returns the number removed. */
+    override fun clearTrafficHistory(): Int {
+        return TrafficHistoryStore(context).use { store -> store.clearTrafficHistory() }
     }
 
     override fun queryProxyGroupNames(excludeNotSelectable: Boolean): List<String> {
