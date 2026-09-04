@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.github.kr328.clash.common.compat.isAllowForceDarkCompat
@@ -92,18 +93,28 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
         previewSurfaceOpacityPermille: Int? = null,
     ) {
         val customBackgroundPath = uiStore.customBackgroundImagePath
-        if (uiStore.remoteThemeKey.isEmpty() && customBackgroundPath.isEmpty()) {
+        val hasRemoteTheme = uiStore.remoteThemeKey.isNotEmpty()
+        if (!hasRemoteTheme && customBackgroundPath.isEmpty()) {
             return
         }
-        val background = uiStore.remoteThemeBackgroundColor.takeUnless { it == 0 }
+        val configuredBackground = uiStore.remoteThemeBackgroundColor.takeIf { hasRemoteTheme && it != 0 }
             ?: resolveThemedColor(android.R.attr.colorBackground)
-        val surface = uiStore.remoteThemeSurfaceColor.takeUnless { it == 0 }
+        val configuredSurface = uiStore.remoteThemeSurfaceColor.takeIf { hasRemoteTheme && it != 0 }
             ?: resolveThemedColor(com.google.android.material.R.attr.colorSurface)
-        val primary = uiStore.remoteThemePrimaryColor.takeUnless { it == 0 }
+        // Online themes normally expose one palette rather than separate light/dark tokens. When
+        // the application is in dark mode, convert only light backgrounds and surfaces to a dark
+        // tonal base before applying transparency, so a translucent card never remains white.
+        val background = adaptThemeBaseColorForDayNight(configuredBackground, dayNight)
+        val surface = adaptThemeBaseColorForDayNight(configuredSurface, dayNight)
+        val primary = uiStore.remoteThemePrimaryColor.takeIf { hasRemoteTheme && it != 0 }
             ?: resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
-        val onSurface = uiStore.remoteThemeOnSurfaceColor.takeUnless { it == 0 }
-            ?: readableForeground(surface)
-        val outline = uiStore.remoteThemeOutlineColor.takeUnless { it == 0 }
+        val onSurface = if (surface != configuredSurface) {
+            readableForeground(surface)
+        } else {
+            uiStore.remoteThemeOnSurfaceColor.takeIf { hasRemoteTheme && it != 0 }
+                ?: readableForeground(surface)
+        }
+        val outline = uiStore.remoteThemeOutlineColor.takeIf { hasRemoteTheme && it != 0 }
             ?: blendColors(onSurface, surface, 0.22f)
         val visibleOutline = blendColors(outline, surface, 0.20f)
         val surfaceOpacityPermille = if (customBackgroundPath.isNotEmpty()) {
@@ -112,14 +123,22 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
             uiStore.remoteThemeSurfaceOpacityPermille
         }
         val surfaceOpacity = (surfaceOpacityPermille / 1000f).coerceIn(0f, 1f)
-        val gradientColors = uiStore.remoteThemeAccentGradient
-            .split(',')
-            .mapNotNull { value -> value.toIntOrNull() }
-            .toIntArray()
+        val gradientColors = if (hasRemoteTheme) {
+            uiStore.remoteThemeAccentGradient
+                .split(',')
+                .mapNotNull { value -> value.toIntOrNull() }
+                .toIntArray()
+        } else {
+            intArrayOf()
+        }
 
         // A user-selected image deliberately overrides the current online theme background while
         // retaining that theme's colors and gradient accents.
-        val backgroundFile = File(customBackgroundPath.ifEmpty { uiStore.remoteThemeBackgroundImagePath })
+        val backgroundFile = File(
+            customBackgroundPath.ifEmpty {
+                uiStore.remoteThemeBackgroundImagePath.takeIf { hasRemoteTheme }.orEmpty()
+            },
+        )
         val backgroundBitmap = backgroundFile.takeIf { it.isFile }
             ?.let { file -> BitmapFactory.decodeFile(file.absolutePath) }
         if (backgroundBitmap == null) {
@@ -243,10 +262,36 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
             }
         }
         if (view is MaterialButton && !isPrimarySurface) {
-            view.backgroundTintList = ColorStateList.valueOf(themedSurfaceColor)
-            view.strokeColor = ColorStateList.valueOf(primary)
+            val checkedState = intArrayOf(android.R.attr.state_checked)
+            val uncheckedState = intArrayOf(-android.R.attr.state_checked)
+            val belongsToThemeModeGroup = view.parent is MaterialButtonToggleGroup
+            view.backgroundTintList = if (belongsToThemeModeGroup) {
+                ColorStateList(
+                    arrayOf(checkedState, uncheckedState),
+                    intArrayOf(withOpacity(primary, 0.28f), themedSurfaceColor),
+                )
+            } else {
+                ColorStateList.valueOf(themedSurfaceColor)
+            }
+            view.strokeColor = if (belongsToThemeModeGroup) {
+                ColorStateList(
+                    arrayOf(checkedState, uncheckedState),
+                    intArrayOf(primary, outline),
+                )
+            } else {
+                ColorStateList.valueOf(primary)
+            }
             view.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
-            view.setTextColor(onSurface)
+            view.setTextColor(
+                if (belongsToThemeModeGroup) {
+                    ColorStateList(
+                        arrayOf(checkedState, uncheckedState),
+                        intArrayOf(primary, onSurface),
+                    )
+                } else {
+                    ColorStateList.valueOf(onSurface)
+                },
+            )
         }
         if (view is ViewGroup) {
             for (index in 0 until view.childCount) {
@@ -264,6 +309,27 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
             0.7152 * Color.green(background) / 255.0 +
             0.0722 * Color.blue(background) / 255.0
         return if (luminance > 0.52) Color.BLACK else Color.WHITE
+    }
+
+    /**
+     * Adapts a single-palette theme base color to the effective application appearance.
+     *
+     * Dark colors are preserved because they may be intentional theme tokens. Only colors whose
+     * luminance is visibly light are remapped in night mode, keeping their hue while lowering the
+     * luminance enough for translucent cards and page backgrounds to remain genuinely dark.
+     */
+    private fun adaptThemeBaseColorForDayNight(color: Int, effectiveDayNight: DayNight): Int {
+        if (effectiveDayNight != DayNight.Night || colorLuminance(color) <= 0.35) {
+            return color
+        }
+        return blendColors(color, Color.BLACK, 0.18f)
+    }
+
+    /** Returns the relative visual luminance used to classify theme base colors. */
+    private fun colorLuminance(color: Int): Double {
+        return 0.2126 * Color.red(color) / 255.0 +
+            0.7152 * Color.green(color) / 255.0 +
+            0.0722 * Color.blue(color) / 255.0
     }
 
     /** Blends a foreground token over a background token using a bounded opacity. */
