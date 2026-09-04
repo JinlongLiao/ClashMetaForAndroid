@@ -59,6 +59,9 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".NetworkDetectionActivity"
+            android:label="@string/network_detection" />
         <activity-alias
             android:name=".MainActivityAlias"
             android:exported="true"

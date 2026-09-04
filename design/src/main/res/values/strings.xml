@@ -121,6 +121,18 @@
 
     <string name="behavior">Behavior</string>
     <string name="network">Network</string>
+    <string name="network_detection">Network Detection</string>
+    <string name="network_detection_summary">Public IP and endpoint latency</string>
+    <string name="public_network">Public Network</string>
+    <string name="network_latency">Network Latency</string>
+    <string name="network_detection_waiting">Detecting network information…</string>
+    <string name="public_network_unavailable">Unable to retrieve public network information</string>
+    <string name="refresh_network_detection">Run Detection Again</string>
+    <string name="network_latency_result">%1$s    %2$s</string>
+    <string name="average_latency_result">Average %1$d ms</string>
+    <string name="theme_mode_system">System</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_light">Light</string>
     <string name="interface_">Interface</string>
     <string name="override">Override</string>
 

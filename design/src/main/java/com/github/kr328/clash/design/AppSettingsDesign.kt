@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.View
 import com.github.kr328.clash.design.databinding.DesignSettingsCommonBinding
 import com.github.kr328.clash.design.model.Behavior
-import com.github.kr328.clash.design.model.DarkMode
 import com.github.kr328.clash.design.preference.*
 import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.design.util.applyFrom
@@ -50,20 +49,8 @@ class AppSettingsDesign(
 
             category(R.string.interface_)
 
-            selectableList(
-                value = uiStore::darkMode,
-                values = DarkMode.values(),
-                valuesText = arrayOf(
-                    R.string.follow_system_android_10,
-                    R.string.always_light,
-                    R.string.always_dark
-                ),
-                icon = R.drawable.ic_baseline_brightness_4,
-                title = R.string.dark_mode
-            ) {
-                listener = OnChangedListener {
-                    requests.trySend(Request.ReCreateAllActivities)
-                }
+            themeMode(uiStore::darkMode) {
+                requests.trySend(Request.ReCreateAllActivities)
             }
 
             switch(

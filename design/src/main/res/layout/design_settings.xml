@@ -31,6 +31,14 @@
                 <com.github.kr328.clash.design.view.ActionLabel
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="@{() -> self.request(Request.StartNetworkDetection)}"
+                    app:icon="@drawable/ic_baseline_dns"
+                    app:subtext="@string/network_detection_summary"
+                    app:text="@string/network_detection" />
+
+                <com.github.kr328.clash.design.view.ActionLabel
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> self.request(Request.StartApp)}"
                     app:icon="@drawable/ic_baseline_settings"
                     app:text="@string/app" />

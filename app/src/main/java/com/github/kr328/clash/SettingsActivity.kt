@@ -20,6 +20,8 @@ class SettingsActivity : BaseActivity<SettingsDesign>() {
                     when (it) {
                         SettingsDesign.Request.StartApp ->
                             startActivity(AppSettingsActivity::class.intent)
+                        SettingsDesign.Request.StartNetworkDetection ->
+                            startActivity(NetworkDetectionActivity::class.intent)
                         SettingsDesign.Request.StartNetwork ->
                             startActivity(NetworkSettingsActivity::class.intent)
                         SettingsDesign.Request.StartOverride ->
