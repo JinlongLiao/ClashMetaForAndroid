@@ -17,10 +17,12 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.tabs.TabLayout
 import com.github.kr328.clash.common.compat.isAllowForceDarkCompat
 import com.github.kr328.clash.common.compat.isLightNavigationBarCompat
 import com.github.kr328.clash.common.compat.isLightStatusBarsCompat
@@ -73,6 +75,10 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
     private var deferRunning = false
     private val nextRequestKey = AtomicInteger(0)
     private var dayNight: DayNight = DayNight.Day
+    /** Recycler views already observing late-created children for remote-theme projection. */
+    private val themedRecyclerViews = Collections.newSetFromMap(
+        WeakHashMap<RecyclerView, Boolean>(),
+    )
 
     protected abstract suspend fun main()
 
@@ -242,6 +248,12 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
             view.alpha = 1f
             view.setBackgroundColor(themedSurfaceColor)
         }
+        if (view is TabLayout) {
+            view.alpha = 1f
+            view.setBackgroundColor(themedSurfaceColor)
+            view.setTabTextColors(withOpacity(onSurface, 0.68f), primary)
+            view.setSelectedTabIndicatorColor(primary)
+        }
         if (view is SwitchMaterial) {
             val checkedState = intArrayOf(android.R.attr.state_checked)
             val uncheckedState = intArrayOf(-android.R.attr.state_checked)
@@ -294,6 +306,16 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
             )
         }
         if (view is ViewGroup) {
+            observeDynamicThemeChildren(
+                view,
+                surface,
+                primary,
+                onSurface,
+                outline,
+                surfaceOpacity,
+                gradientColors,
+                isPrimarySurface,
+            )
             for (index in 0 until view.childCount) {
                 applyRemoteThemeTokens(
                     view.getChildAt(index), surface, primary, onSurface, outline,
@@ -301,6 +323,45 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
                 )
             }
         }
+    }
+
+    /**
+     * Applies the active remote theme to RecyclerView children created after initial inflation.
+     *
+     * Proxy pages and profile rows are attached lazily, after {@link #setContentDesign}; without
+     * this listener they retain the base Android colors while the surrounding page is themed.
+     */
+    private fun observeDynamicThemeChildren(
+        view: ViewGroup,
+        surface: Int,
+        primary: Int,
+        onSurface: Int,
+        outline: Int,
+        surfaceOpacity: Float,
+        gradientColors: IntArray,
+        insidePrimarySurface: Boolean,
+    ) {
+        if (view !is RecyclerView || !themedRecyclerViews.add(view)) {
+            return
+        }
+        view.addOnChildAttachStateChangeListener(
+            object : RecyclerView.OnChildAttachStateChangeListener {
+                override fun onChildViewAttachedToWindow(child: View) {
+                    applyRemoteThemeTokens(
+                        child,
+                        surface,
+                        primary,
+                        onSurface,
+                        outline,
+                        surfaceOpacity,
+                        gradientColors,
+                        insidePrimarySurface,
+                    )
+                }
+
+                override fun onChildViewDetachedFromWindow(child: View) = Unit
+            },
+        )
     }
 
     /** Returns black or white according to WCAG relative luminance contrast. */

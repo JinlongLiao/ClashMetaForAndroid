@@ -7,14 +7,7 @@ import com.github.kr328.kaidl.BinderInterface
 @BinderInterface
 interface IClashManager {
     fun queryTunnelState(): TunnelState
-    fun queryTrafficNow(): Long
     fun queryTrafficTotal(): Long
-    fun queryConnections(): String
-    fun closeConnection(id: String)
-    fun closeAllConnections()
-    fun queryRules(): String
-    fun queryTrafficHistory(since: Long): String
-    fun clearTrafficHistory(): Int
     fun queryProxyGroupNames(excludeNotSelectable: Boolean): List<String>
     fun queryProxyGroup(name: String, proxySort: ProxySort): ProxyGroup
     fun queryConfiguration(): UiConfiguration
@@ -30,4 +23,15 @@ interface IClashManager {
     fun clearOverride(slot: Clash.OverrideSlot)
 
     fun setLogObserver(observer: ILogObserver?)
+
+    // Binder transaction IDs are generated from declaration order. New methods must remain
+    // appended so a foreground process cannot reinterpret an old background process's methods
+    // during incremental deployment or process replacement.
+    fun queryTrafficNow(): Long
+    fun queryConnections(): String
+    fun closeConnection(id: String)
+    fun closeAllConnections()
+    fun queryRules(): String
+    fun queryTrafficHistory(since: Long): String
+    fun clearTrafficHistory(): Int
 }

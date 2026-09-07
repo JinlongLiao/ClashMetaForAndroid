@@ -25,15 +25,17 @@ class TrafficHistoryModule(service: Service) : Module<Unit>(service) {
     override suspend fun run() {
         try {
             coroutineScope {
-                var previous = Clash.queryTrafficTotal()
-                ensureCurrentTrafficBucket()
-                recordTrafficSnapshot(previous.trafficUploadBytes(), previous.trafficDownloadBytes())
+                // Core configuration and the TUN device are initialized concurrently with modules.
+                // Delay the first native query until the runtime is fully started; querying during
+                // that startup window can abort the Go runtime and terminate the VPN process.
+                var previous: Long? = null
                 for (ignored in ticker(TimeUnit.SECONDS.toMillis(10))) {
                     val current = Clash.queryTrafficTotal()
                     val currentUpload = current.trafficUploadBytes()
                     val currentDownload = current.trafficDownloadBytes()
-                    val previousUpload = previous.trafficUploadBytes()
-                    val previousDownload = previous.trafficDownloadBytes()
+                    val previousUpload = previous?.trafficUploadBytes() ?: currentUpload
+                    val previousDownload = previous?.trafficDownloadBytes() ?: currentDownload
+                    ensureCurrentTrafficBucket()
                     recordTrafficSnapshot(
                         if (currentUpload >= previousUpload) currentUpload - previousUpload else currentUpload,
                         if (currentDownload >= previousDownload) currentDownload - previousDownload else currentDownload,

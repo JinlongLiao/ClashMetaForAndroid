@@ -1,10 +1,12 @@
 package com.github.kr328.clash
 
 import com.github.kr328.clash.common.util.intent
+import com.github.kr328.clash.common.log.Log
 import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.design.ProxyDesign
 import com.github.kr328.clash.design.model.ProxyState
+import com.github.kr328.clash.design.util.showExceptionToast
 import com.github.kr328.clash.util.withClash
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -92,10 +94,22 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                         }
                         is ProxyDesign.Request.UrlTest -> {
                             launch {
-                                withClash {
-                                    healthCheck(names[it.index])
+                                runCatching {
+                                    withClash {
+                                        healthCheck(names[it.index])
+                                    }
+                                }.onFailure { exception ->
+                                    Log.e(
+                                        "Proxy group health check failed; group=${names[it.index]}",
+                                        exception,
+                                    )
+                                    design.showExceptionToast(
+                                        exception.message ?: exception.javaClass.simpleName,
+                                    )
                                 }
 
+                                // Always reload the group so the progress indicator is restored
+                                // after a failed, interrupted, or successful native health check.
                                 design.requests.send(ProxyDesign.Request.Reload(it.index))
                             }
                         }

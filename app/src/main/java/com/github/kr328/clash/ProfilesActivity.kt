@@ -9,6 +9,7 @@ import com.github.kr328.clash.common.util.setUUID
 import com.github.kr328.clash.common.util.ticker
 import com.github.kr328.clash.design.ProfilesDesign
 import com.github.kr328.clash.design.ui.ToastDuration
+import com.github.kr328.clash.design.util.showExceptionToast
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.Dispatchers
@@ -43,17 +44,21 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                         ProfilesDesign.Request.Create ->
                             startActivity(NewProfileActivity::class.intent)
                         ProfilesDesign.Request.UpdateAll ->
-                            withProfile {
-                                try {
+                            try {
+                                withProfile {
                                     queryAll().forEach { p ->
-                                        if (p.imported && p.type != Profile.Type.File)
+                                        if (p.imported && p.type != Profile.Type.File) {
                                             update(p.uuid)
+                                        }
                                     }
                                 }
-                                finally {
-                                    withContext(Dispatchers.Main) {
-                                        design.finishUpdateAll();
-                                    }
+                            } catch (exception: Exception) {
+                                design.showExceptionToast(exception)
+                            } finally {
+                                withContext(Dispatchers.Main) {
+                                    // A failed remote update must not leave the toolbar refresh
+                                    // affordance spinning or disable subsequent update attempts.
+                                    design.finishUpdateAll()
                                 }
                             }
                         is ProfilesDesign.Request.Update ->

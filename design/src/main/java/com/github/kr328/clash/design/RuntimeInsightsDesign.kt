@@ -13,6 +13,7 @@ import com.google.android.material.card.MaterialCardView
 import com.github.kr328.clash.design.util.resolveThemedColor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -61,9 +62,12 @@ class RuntimeInsightsDesign(
         renderHeader()
         val rootElement = Json.parseToJsonElement(payload)
         val items = when (insightType) {
-            Type.Connections -> rootElement.jsonObject["connections"]?.jsonArray.orEmpty()
-            Type.Rules -> rootElement.jsonArray
-            Type.Traffic -> rootElement.jsonArray
+            Type.Connections -> requireNotNull(
+                (rootElement as? JsonObject)?.get("connections") as? JsonArray,
+            ) { "Connections payload must contain a JSON array" }
+            Type.Rules, Type.Traffic -> requireNotNull(rootElement as? JsonArray) {
+                "$insightType payload must be a JSON array"
+            }
         }
         addToolbar(items.isNotEmpty())
         if (items.isEmpty()) {

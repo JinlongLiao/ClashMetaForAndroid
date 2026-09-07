@@ -1,5 +1,7 @@
 package com.github.kr328.clash.core
 
+import android.os.SystemClock
+import com.github.kr328.clash.common.log.Log
 import com.github.kr328.clash.core.bridge.*
 import com.github.kr328.clash.core.model.*
 import com.github.kr328.clash.core.util.parseInetSocketAddress
@@ -13,8 +15,15 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicLong
 
 object Clash {
+    /**
+     * Assigns a monotonically increasing identifier to each diagnostic native call.
+     * An unmatched begin record means the process stopped before that JNI call returned.
+     */
+    private val nativeCallSequence = AtomicLong(0)
+
     enum class OverrideSlot {
         Persist, Session
     }
@@ -25,15 +34,21 @@ object Clash {
     }
 
     fun reset() {
-        Bridge.nativeReset()
+        traceNativeCall("reset") {
+            Bridge.nativeReset()
+        }
     }
 
     fun forceGc() {
-        Bridge.nativeForceGc()
+        traceNativeCall("forceGc") {
+            Bridge.nativeForceGc()
+        }
     }
 
     fun suspendCore(suspended: Boolean) {
-        Bridge.nativeSuspend(suspended)
+        traceNativeCall("suspendCore(suspended=$suspended)") {
+            Bridge.nativeSuspend(suspended)
+        }
     }
 
     fun queryTunnelState(): TunnelState {
@@ -43,11 +58,15 @@ object Clash {
     }
 
     fun queryTrafficNow(): Traffic {
-        return Bridge.nativeQueryTrafficNow()
+        return traceNativeCall("queryTrafficNow") {
+            Bridge.nativeQueryTrafficNow()
+        }
     }
 
     fun queryTrafficTotal(): Traffic {
-        return Bridge.nativeQueryTrafficTotal()
+        return traceNativeCall("queryTrafficTotal") {
+            Bridge.nativeQueryTrafficTotal()
+        }
     }
 
     /** Returns the current connection snapshot as the native controller-compatible JSON payload. */
@@ -71,17 +90,23 @@ object Clash {
     }
 
     fun notifyDnsChanged(dns: List<String>) {
-        Bridge.nativeNotifyDnsChanged(dns.toSet().joinToString(separator = ","))
+        traceNativeCall("notifyDnsChanged(count=${dns.size})") {
+            Bridge.nativeNotifyDnsChanged(dns.toSet().joinToString(separator = ","))
+        }
     }
 
     fun notifyTimeZoneChanged(name: String, offset: Int) {
-        Bridge.nativeNotifyTimeZoneChanged(name, offset)
+        traceNativeCall("notifyTimeZoneChanged") {
+            Bridge.nativeNotifyTimeZoneChanged(name, offset)
+        }
     }
 
     fun notifyInstalledAppsChanged(uids: List<Pair<Int, String>>) {
         val uidList = uids.joinToString(separator = ",") { "${it.first}:${it.second}" }
 
-        Bridge.nativeNotifyInstalledAppChanged(uidList)
+        traceNativeCall("notifyInstalledAppsChanged(count=${uids.size})") {
+            Bridge.nativeNotifyInstalledAppChanged(uidList)
+        }
     }
 
     fun startTun(
@@ -93,23 +118,27 @@ object Clash {
         markSocket: (Int) -> Boolean,
         querySocketUid: (protocol: Int, source: InetSocketAddress, target: InetSocketAddress) -> Int
     ) {
-        Bridge.nativeStartTun(fd, stack, gateway, portal, dns, object : TunInterface {
-            override fun markSocket(fd: Int) {
-                markSocket(fd)
-            }
+        traceNativeCall("startTun(stack=$stack)") {
+            Bridge.nativeStartTun(fd, stack, gateway, portal, dns, object : TunInterface {
+                override fun markSocket(fd: Int) {
+                    markSocket(fd)
+                }
 
-            override fun querySocketUid(protocol: Int, source: String, target: String): Int {
-                return querySocketUid(
-                    protocol,
-                    parseInetSocketAddress(source),
-                    parseInetSocketAddress(target)
-                )
-            }
-        })
+                override fun querySocketUid(protocol: Int, source: String, target: String): Int {
+                    return querySocketUid(
+                        protocol,
+                        parseInetSocketAddress(source),
+                        parseInetSocketAddress(target)
+                    )
+                }
+            })
+        }
     }
 
     fun stopTun() {
-        Bridge.nativeStopTun()
+        traceNativeCall("stopTun") {
+            Bridge.nativeStopTun()
+        }
     }
 
     fun startHttp(listenAt: String): String? {
@@ -146,11 +175,54 @@ object Clash {
     }
 
     fun healthCheckAll() {
-        Bridge.nativeHealthCheckAll()
+        traceNativeCall("healthCheckAll") {
+            Bridge.nativeHealthCheckAll()
+        }
     }
 
     fun patchSelector(selector: String, name: String): Boolean {
-        return Bridge.nativePatchSelector(selector, name)
+        return traceNativeCall("patchSelector") {
+            Bridge.nativePatchSelector(selector, name)
+        }
+    }
+
+    /**
+     * Records the boundary of a JNI call without logging request content or credentials.
+     * Native aborts cannot be caught by Kotlin, so the last begin record intentionally remains
+     * unmatched and identifies the operation that was executing when the process terminated.
+     *
+     * @param operation stable operation name and non-sensitive diagnostic dimensions.
+     * @param block native bridge invocation to execute synchronously.
+     * @return the value returned by the native bridge.
+     * @throws Throwable preserves the original native bridge failure after logging its stack.
+     */
+    private inline fun <T> traceNativeCall(operation: String, block: () -> T): T {
+        val sequence = nativeCallSequence.incrementAndGet()
+        val uptimeMillis = SystemClock.elapsedRealtime()
+        val threadName = Thread.currentThread().name
+
+        Log.d(
+            "NativeCall begin: sequence=$sequence, operation=$operation, " +
+                "uptimeMillis=$uptimeMillis, thread=$threadName"
+        )
+
+        return try {
+            block().also {
+                Log.d(
+                    "NativeCall success: sequence=$sequence, operation=$operation, " +
+                        "elapsedMillis=${SystemClock.elapsedRealtime() - uptimeMillis}, " +
+                        "thread=$threadName"
+                )
+            }
+        } catch (exception: Throwable) {
+            Log.e(
+                "NativeCall failed: sequence=$sequence, operation=$operation, " +
+                    "elapsedMillis=${SystemClock.elapsedRealtime() - uptimeMillis}, " +
+                    "thread=$threadName",
+                exception
+            )
+            throw exception
+        }
     }
 
     fun fetchAndValid(

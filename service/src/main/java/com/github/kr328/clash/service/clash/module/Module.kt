@@ -62,6 +62,10 @@ abstract class Module<E>(val service: Service) {
             Log.d("$moduleName: initialize")
 
             run()
+        } catch (exception: Throwable) {
+            Log.e("$moduleName: execution failed", exception)
+
+            throw exception
         } finally {
             withContext(NonCancellable) {
                 receivers.forEach {

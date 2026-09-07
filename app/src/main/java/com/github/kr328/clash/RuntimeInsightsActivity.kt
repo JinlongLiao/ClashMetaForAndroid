@@ -48,8 +48,9 @@ class RuntimeInsightsActivity : BaseActivity<RuntimeInsightsDesign>() {
         design: RuntimeInsightsDesign,
         insightType: RuntimeInsightsDesign.Type,
     ) {
+        var responsePayload: String? = null
         runCatching {
-            withClash {
+            responsePayload = withClash {
                 when (insightType) {
                     RuntimeInsightsDesign.Type.Connections -> queryConnections()
                     RuntimeInsightsDesign.Type.Rules -> queryRules()
@@ -58,8 +59,14 @@ class RuntimeInsightsActivity : BaseActivity<RuntimeInsightsDesign>() {
                     )
                 }
             }
-        }.onSuccess(design::showRuntimeInsights).onFailure { exception ->
-            Log.e("Runtime insight query failed; type=$insightType", exception)
+            // Rendering is part of the response contract: malformed or cross-version Binder data
+            // must enter the recoverable failure state instead of crashing or appearing empty.
+            design.showRuntimeInsights(checkNotNull(responsePayload))
+        }.onFailure { exception ->
+            Log.e(
+                "Runtime insight query failed; type=$insightType, response=$responsePayload",
+                exception,
+            )
             design.showQueryFailure()
         }
     }

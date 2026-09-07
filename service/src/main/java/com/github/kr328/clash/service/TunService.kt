@@ -42,8 +42,9 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
         install(AppListCacheModule(self))
         install(TimeZoneModule(self))
         install(SuspendModule(self))
-        // VPN mode owns a separate runtime from ClashService and must sample the same history.
-        install(TrafficHistoryModule(self))
+        // A/B diagnosis: temporarily stop the new history sampler while retaining all native-call
+        // and lifecycle diagnostics. This isolates whether its additional core polling triggers
+        // the asynchronous Go runtime abort observed in the background process.
 
         try {
             tun.open()
@@ -51,10 +52,13 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
             while (isActive) {
                 val quit = select<Boolean> {
                     close.onEvent {
+                        Log.i("TunService runtime stopping: source=close request")
+
                         true
                     }
                     config.onEvent {
                         reason = it.message
+                        Log.e("TunService runtime stopping: source=configuration, reason=${it.message}")
 
                         true
                     }
@@ -97,12 +101,16 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i("TunService start command: flags=$flags, startId=$startId")
+
         sendClashStarted()
 
         return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
+        Log.i("TunService onDestroy entered: reason=${reason ?: "not set"}")
+
         TunModule.requestStop()
 
         StatusProvider.serviceRunning = false
@@ -119,7 +127,24 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
 
+        Log.i("TunService trim memory: level=$level")
+
         runtime.requestGc()
+    }
+
+    /** Records system VPN revocation before Android destroys the service. */
+    override fun onRevoke() {
+        reason = "VPN permission revoked by system"
+        Log.i("TunService revoked by system")
+
+        super.onRevoke()
+    }
+
+    /** Records task removal to distinguish it from an unexplained native process exit. */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.i("TunService task removed: rootIntent=${rootIntent?.component}")
+
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun TunModule.open() {

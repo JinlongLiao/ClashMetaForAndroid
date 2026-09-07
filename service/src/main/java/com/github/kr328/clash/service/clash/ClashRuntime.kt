@@ -46,6 +46,10 @@ fun CoroutineScope.clashRuntime(block: suspend ClashRuntimeScope.() -> Unit): Cl
                         scope.block()
 
                         cancel()
+                    } catch (exception: Throwable) {
+                        Log.e("ClashRuntime: execution failed", exception)
+
+                        throw exception
                     } finally {
                         withContext(NonCancellable) {
                             Clash.reset()

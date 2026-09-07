@@ -21,6 +21,7 @@
     <RelativeLayout
         android:elevation="0dp"
         android:id="@+id/root_view"
+        android:tag="theme_surface_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="@dimen/space_4"
