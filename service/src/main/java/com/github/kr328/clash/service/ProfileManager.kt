@@ -128,16 +128,16 @@ class ProfileManager(private val context: Context) : IProfileManager,
     }
 
     /**
-     * 手动更新直接等待配置下载、校验和落盘，不经过广播及后台更新服务。
-     * 更新由 ProfileProcessor 串行化；下载失败原样返回调用方，保留已导入配置。
-     * 成功后按最新配置文件时间重新安排自动更新。
+     * 提交手动更新至前台服务，直接启动服务而不经过广播转发。
+     * 返回表示请求已提交，下载结果通过更新广播和通知报告；启动失败向调用方抛出异常。
+     * 请求由服务持有，配置页退出不会取消已经提交的更新。
      *
      * @param uuid 已导入配置的唯一标识。
      */
     override suspend fun update(uuid: UUID) {
-        ProfileProcessor.update(context, uuid, null)
-
-        scheduleNextProfileUpdate(uuid)
+        val imported = ImportedDao().queryByUUID(uuid)
+            ?: throw FileNotFoundException("profile $uuid not found")
+        ProfileReceiver.schedule(context, imported)
     }
 
     /**

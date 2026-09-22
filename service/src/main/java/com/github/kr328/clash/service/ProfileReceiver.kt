@@ -68,12 +68,18 @@ class ProfileReceiver : BroadcastReceiver() {
             context.getSystemService<AlarmManager>()?.cancel(intent)
         }
 
+        /**
+         * 直接启动前台更新服务，避免手动更新依赖电视系统的广播转发。
+         * 保留现有闹钟至更新成功后的重新调度，启动失败时不会丢失自动更新机会。
+         *
+         * @param context 启动服务的应用上下文。
+         * @param imported 待更新的已导入配置，UUID 用于定位更新目标。
+         */
         fun schedule(context: Context, imported: Imported) {
-            val intent = pendingIntentOf(context, imported)
-
-            context.getSystemService<AlarmManager>()?.cancel(intent)
-
-            intent.send(context, 0, null)
+            val intent = Intent(Intents.ACTION_PROFILE_REQUEST_UPDATE)
+                .setComponent(ProfileWorker::class.componentName)
+                .setUUID(imported.uuid)
+            context.startForegroundServiceCompat(intent)
         }
 
         fun scheduleNext(context: Context, imported: Imported) {

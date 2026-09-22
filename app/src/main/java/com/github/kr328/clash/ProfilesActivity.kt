@@ -14,15 +14,20 @@ import com.github.kr328.clash.design.util.showExceptionToast
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.TimeUnit
 import com.github.kr328.clash.design.R
 
 class ProfilesActivity : BaseActivity<ProfilesDesign>() {
-    /** 处理配置页事件；手动更新等待真实结果，自动更新仍接收后台广播通知。 */
+    /** 当前可见页面等待结果的 UUID，仅由主线程读写；退出页面时清除显示状态。 */
+    private val pendingProfileUpdates = mutableSetOf<UUID>()
+
+    /** 页面只提交更新任务，下载由服务执行；结果广播驱动提示与刷新状态。 */
     override suspend fun main() {
         val design = ProfilesDesign(this)
 
@@ -36,6 +41,10 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                     when (it) {
                         Event.ActivityStart, Event.ProfileChanged -> {
                             design.fetch()
+                        }
+                        Event.ActivityStop -> {
+                            pendingProfileUpdates.clear()
+                            design.finishUpdateAll()
                         }
                         else -> Unit
                     }
@@ -77,13 +86,13 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
     }
 
     /**
-     * 等待每份配置实际更新完成后显示结果；单份失败不阻断其余订阅。
-     * 主线程协程通过 withProfile 在 IO 调度器调用服务，取消时不显示失败提示。
-     * 无论查询、下载或列表刷新是否成功，均结束按钮动画。
+     * 提交全部目标后立即继续页面事件循环，下载期间仍可编辑和切换配置。
+     * 不可取消区间仅覆盖查询及服务启动，不包含下载；退出页面不会截断一半的提交。
+     * 每份启动失败单独反馈；提交成功的请求等待完成/失败广播后结束动画。
      *
      * @param profile 单份配置；为空时更新全部已导入的非文件配置。
      */
-    private suspend fun ProfilesDesign.updateProfiles(profile: Profile? = null) {
+    private suspend fun ProfilesDesign.updateProfiles(profile: Profile? = null) = withContext(NonCancellable) {
         try {
             val profiles = if (profile != null) {
                 listOf(profile)
@@ -91,16 +100,14 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                 withProfile { queryAll() }
                     .filter { it.imported && it.type != Profile.Type.File }
             }
+            pendingProfileUpdates.addAll(profiles.map { it.uuid })
             for (current in profiles) {
                 try {
                     withProfile { update(current.uuid) }
-                    showToast(
-                        getString(R.string.toast_profile_updated_complete, current.name),
-                        ToastDuration.Long
-                    )
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    pendingProfileUpdates.remove(current.uuid)
                     // 使用 UUID 标识订阅，不额外拼接可能含凭据的 source。
                     Log.w("Manual profile update failed: uuid=${current.uuid}, type=${current.type}", e)
                     showToast(
@@ -113,14 +120,15 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                     }
                 }
             }
-            fetch()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.w("Manual profile update list query or refresh failed: uuid=${profile?.uuid}", e)
             showExceptionToast(e)
         } finally {
-            finishUpdateAll()
+            if (pendingProfileUpdates.isEmpty()) {
+                finishUpdateAll()
+            }
         }
     }
 
@@ -130,10 +138,12 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
         }
     }
 
+    /** 收到实际更新结果后释放等待状态，自动更新的广播也沿用原有提示。 */
     override fun onProfileUpdateCompleted(uuid: UUID?) {
         if(uuid == null)
             return;
         launch {
+            finishProfileUpdate(uuid)
             var name: String? = null;
             withProfile {
                 name = queryByUUID(uuid)?.name
@@ -144,10 +154,12 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
             )
         }
     }
+    /** 更新失败也必须释放等待状态，允许用户修正配置并再次更新。 */
     override fun onProfileUpdateFailed(uuid: UUID?, reason: String?) {
         if(uuid == null)
             return;
         launch {
+            finishProfileUpdate(uuid)
             var name: String? = null;
             withProfile {
                 name = queryByUUID(uuid)?.name
@@ -160,6 +172,14 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                     startActivity(PropertiesActivity::class.intent.setUUID(uuid))
                 }
             }
+        }
+    }
+
+    /** 在主线程移除已结束的请求，全部结果到达后停止动画。 */
+    private fun finishProfileUpdate(uuid: UUID) {
+        pendingProfileUpdates.remove(uuid)
+        if (pendingProfileUpdates.isEmpty()) {
+            design?.finishUpdateAll()
         }
     }
 }

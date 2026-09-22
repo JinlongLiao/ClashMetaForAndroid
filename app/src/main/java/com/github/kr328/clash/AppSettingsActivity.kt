@@ -1,6 +1,7 @@
 package com.github.kr328.clash
 
 import android.content.ComponentName
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -13,8 +14,12 @@ import com.github.kr328.clash.design.model.Behavior
 import com.github.kr328.clash.design.store.UiStore.Companion.mainActivityAlias
 import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.util.ApplicationObserver
+import com.github.kr328.clash.util.selectBackgroundImage
+import com.github.kr328.clash.common.log.Log
+import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.util.showExceptionToast
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.selects.select
@@ -22,6 +27,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
+    /** 处理设置请求，选择器启动失败时保留页面和原有背景，允许用户继续操作。 */
     override suspend fun main() {
         val themeRepository = RemoteThemeRepository(this)
         val design = AppSettingsDesign(
@@ -57,22 +63,7 @@ class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
                             applySelectedApplicationLanguage()
                         }
                         AppSettingsDesign.Request.SelectCustomBackground -> {
-                            val selectedImage = startActivityForResult(
-                                ActivityResultContracts.OpenDocument(),
-                                arrayOf("image/*"),
-                            )
-                            if (selectedImage != null) {
-                                runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        copyCustomBackgroundImage(selectedImage)
-                                    }
-                                }.onSuccess { imagePath ->
-                                    uiStore.customBackgroundImagePath = imagePath
-                                    ApplicationObserver.createdActivities.forEach { activity -> activity.recreate() }
-                                }.onFailure { error ->
-                                    design.showExceptionToast(error.message ?: "Unable to use selected image")
-                                }
-                            }
+                            selectCustomBackgroundImage(design)
                         }
                         AppSettingsDesign.Request.ClearCustomBackground -> {
                             val image = File(uiStore.customBackgroundImagePath)
@@ -113,6 +104,35 @@ class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 选择、校验并保存背景，成功才更新设置；启动失败展示可恢复的提示。
+     * 用户取消或页面销毁不改变原背景，取消协程不会被转换为业务错误。
+     *
+     * @param design 当前设置页面，用于显示选择器缺失或图片读取失败的原因。
+     */
+    private suspend fun selectCustomBackgroundImage(design: AppSettingsDesign) {
+        try {
+            val selectedImage = selectBackgroundImage { pickerIntent ->
+                val result = startActivityForResult(
+                    ActivityResultContracts.StartActivityForResult(), pickerIntent,
+                )
+                if (result.resultCode == RESULT_OK) result.data?.data else null
+            } ?: return
+            val imagePath = withContext(Dispatchers.IO) {
+                copyCustomBackgroundImage(selectedImage)
+            }
+            uiStore.customBackgroundImagePath = imagePath
+            ApplicationObserver.createdActivities.forEach { it.recreate() }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ActivityNotFoundException) {
+            design.showExceptionToast(getString(R.string.custom_background_picker_unavailable))
+        } catch (e: Exception) {
+            Log.w("Custom background selection or import failed", e)
+            design.showExceptionToast(e)
         }
     }
 

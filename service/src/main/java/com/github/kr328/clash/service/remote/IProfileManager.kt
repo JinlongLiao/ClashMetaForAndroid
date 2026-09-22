@@ -13,8 +13,9 @@ interface IProfileManager {
     suspend fun delete(uuid: UUID)
     suspend fun patch(uuid: UUID, name: String, source: String, interval: Long, ageSecretKey: String?)
     /**
-     * 下载、校验并保存已导入配置，完成后返回；失败通过异常返回调用方。
-     * 不修改编辑中的草稿，重复调用会重新下载，更新操作在服务端串行执行。
+     * 将已导入配置提交给前台更新服务，返回不代表下载成功。
+     * 启动失败通过异常返回；下载结果通过更新广播及通知报告。
+     * 不修改编辑中的草稿，配置下载由服务端串行执行。
      *
      * @param uuid 已导入配置的唯一标识。
      */

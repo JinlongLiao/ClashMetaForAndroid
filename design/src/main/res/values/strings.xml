@@ -445,4 +445,5 @@
     <string name="connections_snapshot_summary">Current core connection snapshot</string>
     <string name="rules_snapshot_summary">Rules are shown in matching order</string>
     <string name="traffic_history_range_summary">Last 24 hours · 15-minute buckets · automatically retained for 31 days</string>
+    <string name="custom_background_picker_unavailable">No accessible image picker was found. Install a TV-compatible file manager that supports selecting images, then try again.</string>
 </resources>
