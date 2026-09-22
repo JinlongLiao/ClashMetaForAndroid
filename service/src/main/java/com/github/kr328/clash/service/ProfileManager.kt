@@ -127,14 +127,29 @@ class ProfileManager(private val context: Context) : IProfileManager,
         }
     }
 
+    /**
+     * 手动更新直接等待配置下载、校验和落盘，不经过广播及后台更新服务。
+     * 更新由 ProfileProcessor 串行化；下载失败原样返回调用方，保留已导入配置。
+     * 成功后按最新配置文件时间重新安排自动更新。
+     *
+     * @param uuid 已导入配置的唯一标识。
+     */
     override suspend fun update(uuid: UUID) {
-        scheduleUpdate(uuid, true)
+        ProfileProcessor.update(context, uuid, null)
+
+        scheduleNextProfileUpdate(uuid)
     }
 
+    /**
+     * 下载并提交编辑中的配置，成功后安排下一次自动更新；处理失败向调用方抛出异常。
+     *
+     * @param uuid 待提交配置的唯一标识。
+     * @param callback 可选的下载及校验进度回调。
+     */
     override suspend fun commit(uuid: UUID, callback: IFetchObserver?) {
         ProfileProcessor.apply(context, uuid, callback)
 
-        scheduleUpdate(uuid, false)
+        scheduleNextProfileUpdate(uuid)
     }
 
     override suspend fun release(uuid: UUID) {
@@ -225,13 +240,14 @@ class ProfileManager(private val context: Context) : IProfileManager,
         s.copyRecursively(t)
     }
 
-    private suspend fun scheduleUpdate(uuid: UUID, startImmediately: Boolean) {
+    /**
+     * 为仍存在的配置安排下一次自动更新；配置已删除时不再建立调度。
+     *
+     * @param uuid 已保存配置的唯一标识。
+     */
+    private suspend fun scheduleNextProfileUpdate(uuid: UUID) {
         val imported = ImportedDao().queryByUUID(uuid) ?: return
 
-        if (startImmediately) {
-            ProfileReceiver.schedule(context, imported)
-        } else {
-            ProfileReceiver.scheduleNext(context, imported)
-        }
+        ProfileReceiver.scheduleNext(context, imported)
     }
 }

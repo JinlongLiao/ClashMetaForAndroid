@@ -92,14 +92,19 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
         dialog.show()
     }
 
+    /** 在主线程发起批量更新；当前批次完成前忽略重复点击。 */
     fun requestUpdateAll() {
-        allUpdating = true;
+        if (allUpdating) {
+            return
+        }
+        allUpdating = true
         changeUpdateAllButtonStatus()
         requests.trySend(Request.UpdateAll)
     }
 
+    /** 在主线程结束手动更新状态，成功或失败均须调用以恢复按钮。 */
     fun finishUpdateAll() {
-        allUpdating = false;
+        allUpdating = false
         changeUpdateAllButtonStatus()
     }
 
@@ -111,8 +116,18 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
         requests.trySend(Request.Active(profile))
     }
 
+    /**
+     * 在主线程发起单个配置更新，并与批量更新共用进度及重复点击保护。
+     *
+     * @param dialog 触发更新后关闭的操作菜单。
+     * @param profile 需要更新的已导入配置。
+     */
     fun requestUpdate(dialog: Dialog, profile: Profile) {
-        requests.trySend(Request.Update(profile))
+        if (!allUpdating) {
+            allUpdating = true
+            changeUpdateAllButtonStatus()
+            requests.trySend(Request.Update(profile))
+        }
 
         dialog.dismiss()
     }
