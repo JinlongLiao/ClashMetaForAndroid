@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.BitmapFactory
 import android.graphics.LinearGradient
 import android.graphics.Shader
@@ -440,6 +441,32 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyDayNight()
+
+        // 覆盖层只绘制遥控焦点，不抢占事件或修改业务控件的选中、背景与布局。
+        val focusRoot = window.decorView
+        val remoteFocusDrawable = RemoteFocusDrawable(focusRoot) {
+            uiStore.remoteThemePrimaryColor.takeIf { uiStore.remoteThemeKey.isNotEmpty() && it != 0 }
+                ?: resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+        }
+        focusRoot.overlay.add(remoteFocusDrawable)
+        val focusBounds = Rect()
+        var lastFocusSignature = 0
+        focusRoot.viewTreeObserver.addOnPreDrawListener {
+            remoteFocusDrawable.setBounds(0, 0, focusRoot.width, focusRoot.height)
+            val focused = focusRoot.findFocus()
+            focusBounds.setEmpty()
+            focused?.getGlobalVisibleRect(focusBounds)
+            // 仅在焦点、位置或状态变化时重绘，避免空闲页面持续刷新。
+            val focusSignature = listOf(
+                focused, focusBounds, focused?.isPressed, focused?.isEnabled,
+                focusRoot.hasWindowFocus(), focusRoot.isInTouchMode,
+            ).hashCode()
+            if (focusSignature != lastFocusSignature) {
+                lastFocusSignature = focusSignature
+                remoteFocusDrawable.invalidateSelf()
+            }
+            true
+        }
 
         // Apply excludeFromRecents setting to all app tasks.
         checkNotNull(getSystemService<ActivityManager>()).appTasks.forEach { task ->
