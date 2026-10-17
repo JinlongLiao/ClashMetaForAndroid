@@ -77,6 +77,8 @@
                     app:cardCornerRadius="18dp"
                     app:cardElevation="1dp"
                     app:rippleColor="#33FFFFFF">
+                    <!-- 默认聚焦状态卡片，便于电视遥控器直接操作。 -->
+                    <requestFocus />
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
